@@ -73,16 +73,15 @@ public class Dijkstra<E> {
 			//System.out.println("Min: "+min.toString());
 			a++;
 			itterations++; 
-		System.out.println(path.toString()); 
+		//System.out.println(path.toString()); 
 		}//end while
 		endTime = System.nanoTime() - startTime;
 		
 	 // Find the path to each node 
 		
 		a = 0; 
-		
 		n = startNode;
-		System.out.println("StartNode: " + n.toString()); 
+		//System.out.println("StartNode: " + n.toString()); 
 		for (int i = 0; i < n.getConnections().size(); i++){
 			tempEdge = (Edge<E>) n.getConnections().get(i);
 			path.add(n);
@@ -90,65 +89,32 @@ public class Dijkstra<E> {
 			pathList.add(path); 
 			path = new ArrayList<Node<E>>(); 
 		}
-		System.out.println("PathList : " + pathList.toString()); 
+		//System.out.println("PathList : " + pathList.toString()); 
 		Node<E> tempNode; 
 		Node<E> tempNode2 = null;
 	//while(a <= 4){
-		for(int i = 0; i < nodes.size(); i++){
+		for(int i = 0; i < nodes.size() -1; i++){
 			tempNode = pathList.get(i).get(pathList.get(i).size()-1);
-			System.out.println("TempNode : " + tempNode.toString() + " " + tempNode.getConnections().toString()); 
+			//System.out.println("TempNode : " + tempNode.toString() + " " + tempNode.getConnections().toString()); 
 			
 			for (int j = 0; j < tempNode.getConnections().size(); j++){
 				tempEdge = tempNode.getConnections().get(j);
 				tempNode2 = tempEdge.getTwo(); 
-				System.out.println("TempNode2 :" + tempNode2.toString());
-				//System.out.println(tempNode2.getWeight() + " ?=" +tempNode.getWeight() + " + " +tempEdge.getDistance());
+				//System.out.println("TempNode2 :" + tempNode2.toString());
 				if (tempNode2.getWeight() == tempNode.getWeight() + tempEdge.getDistance()){
-					
-					System.out.println("Initialize path to new "); 
 					path  = new ArrayList<Node<E>>(pathList.get(i));
-					System.out.println("Path before : " + path.toString()); 
+					//System.out.println("Path before : " + path.toString()); 
 					path.add(tempEdge.getTwo()); 
-					System.out.println("Path after : " + path.toString());
+					//System.out.println("Path after : " + path.toString());
 					pathList.add(path);
-					System.out.println("PathList -->: " +pathList.toString());
-				}
-				System.out.println("Setting to pathList "); 
-				
-				//tempNode = tempNode2;	
-				a++;
+					//System.out.println("PathList -->: " +pathList.toString());
+				}	
 				 
 				}
 					
 			}
 			 
-		//}
-			
-	//	for(int i = 0; i < pathList.size(); i++){
-	//		System.out.println(pathList.get(i).get(1)); 
-	//		Node<E> tempNode = pathList.get(i).get(1);
-	//		for(int k = 0; k < tempNode.getConnections().size(); k++){
-	//			tempEdge = (Edge<E>) tempNode.getConnections().get(k);
-	//			if(tempEdge.getTwo().getWeight() == tempNode.getWeight() + tempEdge.getDistance())
-	//				path.add(tempEdge.getTwo());
-	//				pathList.add(path);
-	//		}
-				
-				
-	//	}
-		/*
-		System.out.println("Path list " + pathList.toString());
-		Collections.reverse(nodes); 
-		for(Node n1 : nodes){
-			System.out.println("Node :"+ n1.toString() + " "+ n1.getWeight()); 
-			if(n1.getWeight() == 0){
-				startNode = n1; 
-				path.add(n1); 
-			}
-			//if(n1.getWeight() == startNode.getWeight() + )
-							
-		}
-		*/
+		//System.out.println("PathList -->: " +pathList.toString());
 		System.out.println("Dijkstra time: "+ endTime);
 		return pathList; 		
 	}

@@ -15,8 +15,6 @@ public class Node<E> implements Comparator {
 	private int weight;
 	private LinkedList<Edge<E>> pointers;
 	private static int ID = 0;
-
-	private GraphPanel<?> gp; 
 	private Point p;
 	private int r;
 	private Color color;

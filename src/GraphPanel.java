@@ -1,6 +1,5 @@
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.GeneralPath;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -16,29 +15,11 @@ import java.util.Scanner;
 import javax.swing.*;
 import javax.swing.event.*;
 
-/**
- * @author John B. Matthews; distribution per GPL.
- * @param <E>
- */
-
-// (Done)To Do: Save, Open files
-// (Done) Clean up matrix 
-
-// Get shortest path in a list
-
-// Animation (timer)
-
-// Delete button to delete nodes
-
-// Test efficency, Order of magnitude
-
-// Routing table 
-
 public class GraphPanel<E> extends JComponent {
 	private static final int WIDE = 1350;
 	private static final int HIGH = 650;
 	private static final int RADIUS = 30;
-	private static final int UPDATE_PERIOD = 10;
+	private static final int UPDATE_PERIOD = 2000;
 	private static final Random rnd = new Random();
 	private ControlPanel control = new ControlPanel();
 	private int radius = RADIUS;
@@ -46,21 +27,23 @@ public class GraphPanel<E> extends JComponent {
 	private List<Node> nodes = new ArrayList<Node>();
 	private List<Node> selected = new ArrayList<Node>();
 	private List<Edge> edges = new ArrayList<Edge>();
-	private List<Node> pathlist = new ArrayList<Node>();
-	private List<Point> positionList = new ArrayList<Point>();
+	private ArrayList<ArrayList<Node>> pathlist = new ArrayList<ArrayList<Node>>();
+	private ArrayList<Point> positionList = new ArrayList<Point>();
 	private ArrayList<ArrayList<Integer>> matrix = new ArrayList<ArrayList<Integer>>();
 	private Node startNode;
 	private Point mousePt = new Point(WIDE / 3, HIGH / 3);
 	private Rectangle mouseRect = new Rectangle();
 	private boolean selecting = false;
-	private long dTime; 
-	private long bfTime; 
-	private int dItt; 
-	private int bfItt; 
-	private double orderObellman; 
-	private double orderOdijkstra; 
+	private long dTime;
+	private long bfTime;
+	private int dItt;
+	private int bfItt;
+	private int countD = 0;
+	private int countBF = 0;
+	private double totalD = 0;
+	private double totalBF = 0;
 	// Attributes of moving object
-	private int x = 0, y = 0; // top-left (x, y)
+	private int x , y ; // top-left (x, y)
 	private int size = 50; // width and height
 	private int xSpeed = 3, ySpeed = 5; // displacement per step in x, y
 
@@ -70,11 +53,11 @@ public class GraphPanel<E> extends JComponent {
 			public void run() {
 				JFrame f = new JFrame("GraphPanel");
 				JPanel jp1 = new JPanel();
-				jp1.setSize(100,100); 
+				jp1.setSize(100, 100);
 				f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 				GraphPanel gp = new GraphPanel();
 				f.add(gp.control, BorderLayout.NORTH);
-				f.add(jp1, BorderLayout.SOUTH); 
+				f.add(jp1, BorderLayout.SOUTH);
 				f.add(new JScrollPane(gp), BorderLayout.CENTER);
 				f.getRootPane().setDefaultButton(gp.control.defaultButton);
 				f.pack();
@@ -91,13 +74,20 @@ public class GraphPanel<E> extends JComponent {
 		ActionListener updateTask = new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent evt) {
-				update(); // update the (x, y) position
-				repaint(); // Refresh the JFrame, callback paintComponent()
+				System.out.println(positionList.toString());
+				//for(Point p: positionList){
+					//update(p);
+					//repaint();
+					//System.out.println(x + " " + y); 
+					 
+					//}
+				 // update the (x, y) position
+				 // Refresh the JFrame, callback paintComponent()
 			}
 		};
 		// Allocate a Timer to run updateTask's actionPerformed() after every
 		// delay msec
-		new Timer(UPDATE_PERIOD, updateTask).start();
+		//new Timer(UPDATE_PERIOD, updateTask).start();
 	}
 
 	@Override
@@ -140,60 +130,109 @@ public class GraphPanel<E> extends JComponent {
 			g.drawRect(mouseRect.x, mouseRect.y, mouseRect.width,
 					mouseRect.height);
 		}
-		int i = 0; 
-		int h = 0; 
-		
-		if(matrix.size() != 0){
-						
-			g.setColor(Color.black); 
-			g.drawString("Order of magnitude = O(" + nodes.size() * edges.size()  + ")", 400, 20);
-			//Draw the dijkstra efficiency
-			g.drawString("Bellman Ford Matrix ", 27, 15); 
-			
-			for(Node<E> n : nodes){
-				g.drawString(n.getElement().toString(), 27 +h, 30);
-				g.drawString("____", 23 +h, 32); 
-				g.drawString(n.getElement().toString() + " |", 5, 45 + i); 
-				h = h + 30; 
+		int i = 0;
+		int h = 0;
+
+		if (matrix.size() != 0) {
+
+			g.setColor(Color.black);
+			g.drawString(
+					"[ Bellman/Ford Itterations:" + Integer.toString(bfItt)
+							+ "    Time: " + bfTime + " nanoseconds]", 400, 20);
+			g.drawString("Bellman Ford Matrix ", 27, 15);
+
+			for (Node<E> n : nodes) {
+				g.drawString(n.getElement().toString(), 27 + h, 30);
+				g.drawString("____", 23 + h, 32);
+				g.drawString(n.getElement().toString() + " |", 5, 45 + i);
+				h = h + 30;
 				i = i + 15;
-			}	
-			h = 0; 
-			i = 0; 
+			}
+			h = 0;
+			i = 0;
 			for (int k = 0; k < nodes.size(); k++) {
-				for (int j = 0; j <nodes.size(); j++){
-				g.drawString("[" + matrix.get(k).get(j).toString() + "]", 27 +h , 45+i);
-				 h = h + 30;
-			}
-				h = 0; 
+				for (int j = 0; j < nodes.size(); j++) {
+					g.drawString("[" + matrix.get(k).get(j).toString() + "]",
+							27 + h, 45 + i);
+					h = h + 30;
+				}
+				h = 0;
 				i = i + 15;
-				repaint(); 
-			
+				repaint();
+
+			}
 		}
+		if (pathlist.size() != 0) {
+
+			g.setColor(Color.black);
+			g.drawString("[ Dijkstra Itterations:" + Integer.toString(dItt)
+					+ "    Time: " + dTime + " nanoseconds]", 400, 40);
+			g.drawString("Routing Table for " + pathlist.get(0).get(0) + " :",
+					10 + h, 145 + i);
+			g.drawString("Router | Next Hop | Cost ", 10 + h, 160 + i);
+			g.drawString("___________________", 13 + h, 165 + i);
+
+			for (int m = 0; m < pathlist.size(); m++) {
+
+				for (int l = 1; l < pathlist.get(m).size(); l++) {
+					g.drawString(pathlist.get(m)
+							.get(pathlist.get(m).size() - 1).toString()
+							+ " |", 15, 180 + i);
+
+					if (pathlist.get(m).size() == 2) {
+						h = h + 40;
+						g.drawString("  -----  ", 15 + h, 180 + i);
+						g.drawString(
+								Integer.toString(pathlist.get(m)
+										.get(pathlist.get(m).size() - 1)
+										.getWeight()), 80 + h, 180 + i);
+
+					} else if (l != pathlist.get(m).size() - 1) {
+						g.drawString(pathlist.get(m).get(l).toString(), 60 + h,
+								180 + i);
+						if (l == pathlist.get(m).size() - 2) {
+							g.drawString(
+									Integer.toString(pathlist.get(m)
+											.get(pathlist.get(m).size() - 1)
+											.getWeight()), 125, 180 + i);
+
+						}
+						h = h + 20;
+					}
+				}
+
+				g.drawString("|___________________", 10, 180 + i);
+
+				h = 0;
+				i = i + 15;
+			}
+
+			g.drawString("Shortest Path", 15 + h, 180 + i);
+			for (int a = 0; a < pathlist.size(); a++) {
+				g.drawString(pathlist.get(a).toString(), 15 + h, 200 + i);
+				i = i + 20;
+
+			}
+
+			//g.setColor(Color.BLACK);
+			//g.fillOval(startNode.getLocation().x, startNode.getLocation().y, size, size);
+			//update();
+		}
+
 	}
 
-		if (startNode != null) {
-			x = startNode.getLocation().x;
-			y = startNode.getLocation().y;
-
+	
+	public void update(Point p) {
+		System.out.println("Got to update"); 
+		this.x = p.x;
+		this.y = p.y; 
+		repaint(); 
+		if (x > WIDE - size || x < 0) {
+			xSpeed = -xSpeed;
 		}
-		//g.setColor(Color.BLACK);
-		//g.fillOval(x, y, size, size);
-	}
-		
+		if (y > HIGH - size || y < 0) {
+			ySpeed = -ySpeed;
 
-	public void update() {
-		GeneralPath one = new GeneralPath();
-
-		if (nodes.size() != 0) {
-			x += xSpeed;
-			y += ySpeed;
-
-			if (x > WIDE - size || x < 0) {
-				xSpeed = -xSpeed;
-			}
-			if (y > HIGH - size || y < 0) {
-				ySpeed = -ySpeed;
-			}
 		}
 	}
 
@@ -271,7 +310,6 @@ public class GraphPanel<E> extends JComponent {
 		private Action seqNodes = new SequenceAction("Sequence");
 		private Action open = new OpenAction("Open");
 		private Action save = new SaveAction("Save");
-		
 
 		private Action dijkstra = new DijkstraPathAction("Dijkstra");
 		private Action bellmanFord = new BellmanFordPathAction("Bellman/Ford");
@@ -279,8 +317,6 @@ public class GraphPanel<E> extends JComponent {
 		private JComboBox kindCombo = new JComboBox();
 		private ColorIcon hueIcon = new ColorIcon(Color.red);
 		private JPopupMenu popup = new JPopupMenu();
-		
-			
 
 		ControlPanel() {
 			this.setLayout(new FlowLayout(FlowLayout.LEFT));
@@ -355,7 +391,8 @@ public class GraphPanel<E> extends JComponent {
 			nodes.clear();
 			edges.clear();
 			startNode = null;
-			matrix.clear(); 
+			matrix.clear();
+			pathlist.clear();
 			repaint();
 		}
 	}
@@ -416,12 +453,9 @@ public class GraphPanel<E> extends JComponent {
 					n2.connectTo(n1, d);
 					Edge newEdge = new Edge(n1, n2, d);
 					edges.add(newEdge);
-
-				}//
-
+				}
 			}
 			repaint();
-
 		}
 	}
 
@@ -526,10 +560,11 @@ public class GraphPanel<E> extends JComponent {
 			Color color = Color.RED;
 			file = fc.getSelectedFile();
 			Scanner scan = null;
+		
 			try {
-				scan = new Scanner(file);
+				scan = new Scanner(file);				
 			} catch (FileNotFoundException e1) {
-
+				
 				e1.printStackTrace();
 			}
 
@@ -580,7 +615,6 @@ public class GraphPanel<E> extends JComponent {
 
 				}
 			}
-			// System.out.println(edges.toString());
 			repaint();
 		}
 	}
@@ -640,14 +674,21 @@ public class GraphPanel<E> extends JComponent {
 			if (startNode != null) {
 				d1.resetGraph(nodes);
 				pathlist = d1.dijkstra(startNode, nodes, edges);
-				dTime = d1.getTestTime(); 
-				System.out.println(dTime +" milliseconds");
-				dItt = d1.getItterations(); 
-				System.out.println(dItt +" itterations");
-				System.out.println("Order of magnitude = O(" + edges.size() +  nodes.size() * nodes.size() + ")"); 
-							
-				update();
+				dTime = d1.getTestTime();
+				System.out.println(dTime + " nanoseconds");
+				dItt = d1.getItterations();
+				System.out.println(dItt + " itterations");
+				totalD += dTime;
+				countD++;
+				System.out.println("Count: " + countD + "Total average time : "
+						+ totalD / countD);
 				repaint();
+				for(int i = 0; i < pathlist.size(); i++){
+					for(int j = 0; j < pathlist.get(pathlist.get(i).size()-1).size(); j++){
+						positionList.add(pathlist.get(i).get(j).getLocation()); 
+					}
+				}
+				 
 			} else
 				JOptionPane.showMessageDialog(null,
 						"Please choose a start node", "Failure",
@@ -667,11 +708,14 @@ public class GraphPanel<E> extends JComponent {
 			if (nodes != null) {
 				BellmanFord bf = new BellmanFord();
 				matrix = bf.bellmanFord(nodes);
-				bfTime = bf.getTestTime(); 
-				System.out.println(bfTime +" milliseconds");
-				bfItt = bf.getItterations(); 
-				System.out.println(bfItt +" itterations");
-				System.out.println("Order of magnitude = O(" + nodes.size() * edges.size()  + ")"); 
+				bfTime = bf.getTestTime();
+				System.out.println(bfTime + " milliseconds");
+				bfItt = bf.getItterations();
+				totalBF += bfTime;
+				countBF++;
+				System.out.println(bfItt + " itterations");
+				System.out.println("Count: " + countBF
+						+ " Total average time : " + totalBF / countBF);
 			}
 		}
 	}
